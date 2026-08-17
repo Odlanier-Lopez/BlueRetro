@@ -57,6 +57,7 @@ set(cov_srcs
 set(srcs
     "adapter/adapter_debug.c"
     "bluetooth/debug.c"
+    "display_bridge.c"
     "system/delay.c"
     "system/fpga_config.c"
     "system/fs.c"
