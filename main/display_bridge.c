@@ -90,7 +90,9 @@ void display_bridge_init(void) {
                  UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
     uart_driver_install(DISPLAY_UART_PORT, 256, 0, 0, NULL, 0);
 
-    /* Se fija al nucleo 2 a proposito, para no interferir con el
-       nucleo 1 que BlueRetro usa para Bluetooth. */
-    xTaskCreatePinnedToCore(display_bridge_task, "display_bridge", 2048, NULL, 1, NULL, 1);
+    /* Se fija al nucleo 0 (el que corre FreeRTOS normal, junto al Bluetooth).
+       El nucleo 1 en este proyecto NO esta libre para GameCube: lo toma
+       por completo wired_init_task en modo bare-metal para el timing del
+       protocolo con la consola. Poner tareas ahi corrompe ese nucleo. */
+    xTaskCreatePinnedToCore(display_bridge_task, "display_bridge", 2048, NULL, 1, NULL, 0);
 }
