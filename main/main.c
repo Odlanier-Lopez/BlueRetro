@@ -28,6 +28,7 @@
 #include "tests/ws_srv.h"
 #include "tests/coverage.h"
 #include "sdkconfig.h"
+#include "display_bridge.h"
 
 static uint32_t chip_package = EFUSE_RD_CHIP_VER_PKG_ESP32D0WDQ6;
 
@@ -151,6 +152,7 @@ static void wl_init_task(void *arg) {
 void app_main()
 {
     adapter_init();
+    display_bridge_init();
 
     start_app_cpu(wired_init_task);
     xTaskCreatePinnedToCore(wl_init_task, "wl_init_task", 2560, NULL, 10, NULL, 0);
