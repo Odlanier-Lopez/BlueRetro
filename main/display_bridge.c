@@ -1,4 +1,3 @@
-idge · C
 /*
  * display_bridge.c
  *
@@ -17,7 +16,7 @@ idge · C
  * Formato enviado por UART: el hash en texto + salto de linea.
  * Ejemplo: "06F64606FD31A657\n"
  */
- 
+
 #include <stdio.h>
 #include <string.h>
 #include "freertos/FreeRTOS.h"
@@ -25,31 +24,31 @@ idge · C
 #include "driver/uart.h"
 #include "driver/gpio.h"
 #include "adapter/gameid.h"
- 
+
 #define DISPLAY_UART_PORT   UART_NUM_1
 #define DISPLAY_UART_TX_PIN 25   /* GPIO25 - confirmado libre en el esquema del usuario */
 #define DISPLAY_UART_BAUD    115200
- 
+
 static char last_sent_hash[24] = {0};
- 
+
 static void display_bridge_task(void *arg) {
     while (1) {
         const char *hex_id = gid_get();
- 
+
         if (hex_id[0] != '\0' && strcmp(hex_id, last_sent_hash) != 0) {
             strncpy(last_sent_hash, hex_id, sizeof(last_sent_hash) - 1);
- 
+
             char line[32];
             int len = snprintf(line, sizeof(line), "%s\n", hex_id);
             uart_write_bytes(DISPLAY_UART_PORT, line, len);
- 
+
             printf("[display_bridge] Hash enviado: %s\n", hex_id);
         }
- 
+
         vTaskDelay(pdMS_TO_TICKS(500));
     }
 }
- 
+
 void display_bridge_init(void) {
     uart_config_t uart_config = {
         .baud_rate = DISPLAY_UART_BAUD,
@@ -59,10 +58,11 @@ void display_bridge_init(void) {
         .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
         .source_clk = UART_SCLK_DEFAULT,
     };
- 
+
     uart_param_config(DISPLAY_UART_PORT, &uart_config);
     uart_set_pin(DISPLAY_UART_PORT, DISPLAY_UART_TX_PIN, UART_PIN_NO_CHANGE,
                  UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
     uart_driver_install(DISPLAY_UART_PORT, 256, 0, 0, NULL, 0);
- 
+
     xTaskCreatePinnedToCore(display_bridge_task, "display_bridge", 2048, NULL, 1, NULL, 0);
+}
