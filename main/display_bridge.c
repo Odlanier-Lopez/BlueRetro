@@ -27,7 +27,7 @@
 
 #define DISPLAY_UART_PORT   UART_NUM_1
 #define DISPLAY_UART_TX_PIN 25   /* GPIO25 - confirmado libre en el esquema del usuario */
-#define DISPLAY_UART_BAUD    115200
+#define DISPLAY_UART_BAUD    9600
 
 static char last_sent_hash[24] = {0};
 
