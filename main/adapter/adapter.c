@@ -23,6 +23,7 @@
 #include "macro.h"
 #include "bluetooth/host.h"
 #include "tests/cmds.h"
+#include "system/manager.h"
 
 const uint32_t hat_to_ld_btns[16] = {
     BIT(PAD_LD_UP), BIT(PAD_LD_UP) | BIT(PAD_LD_RIGHT), BIT(PAD_LD_RIGHT), BIT(PAD_LD_DOWN) | BIT(PAD_LD_RIGHT),
@@ -414,6 +415,33 @@ void IRAM_ATTR adapter_init_buffer(uint8_t wired_id) {
     }
 }
 
+#define HOME_BTN_HOLD_US (2500 * 1000)   /* 2.5 segundos para apagar */
+
+static int64_t home_btn_press_start[BT_MAX_DEV] = {0};
+static bool home_btn_triggered[BT_MAX_DEV] = {0};
+
+static void check_home_btn_hold(struct bt_data *bt_data, struct wireless_ctrl *ctrl_data) {
+    uint8_t dev_id = bt_data->base.pids->id;
+    bool home_pressed = (ctrl_data->btns[0].value & BIT(PAD_MT)) != 0;
+
+    if (home_pressed) {
+        if (home_btn_press_start[dev_id] == 0) {
+            home_btn_press_start[dev_id] = esp_timer_get_time();
+            home_btn_triggered[dev_id] = false;
+        }
+        else if (!home_btn_triggered[dev_id] &&
+                 (esp_timer_get_time() - home_btn_press_start[dev_id]) >= HOME_BTN_HOLD_US) {
+            home_btn_triggered[dev_id] = true;
+            printf("# %s: Home button held, powering off\n", __FUNCTION__);
+            sys_mgr_cmd(SYS_MGR_CMD_PWR_OFF);
+        }
+    }
+    else {
+        home_btn_press_start[dev_id] = 0;
+        home_btn_triggered[dev_id] = false;
+    }
+}
+
 void adapter_bridge(struct bt_data *bt_data) {
     uint32_t out_mask = 0;
 
@@ -422,6 +450,7 @@ void adapter_bridge(struct bt_data *bt_data) {
             /* Unsupported report */
             return;
         }
+        check_home_btn_hold(bt_data, ctrl_input);
 
 #ifdef CONFIG_BLUERETRO_ADAPTER_INPUT_DBG
         TESTS_CMDS_LOG("\"generic_input\": {");
