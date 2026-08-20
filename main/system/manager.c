@@ -39,6 +39,8 @@
 
 #define POWER_OFF_ALT_PIN 12
 
+#define PIEZO_PIN 18
+
 #define SENSE_P1_PIN 35
 #define SENSE_P2_PIN 36
 #define SENSE_P3_PIN 32
@@ -485,7 +487,31 @@ static void sys_mgr_inquiry_toggle(void) {
     }
 }
 
+/* Genera un tono simple en el piezo, usando un timer/canal LEDC
+   propio y separado de los que ya usan los LEDs de los puertos. */
+static void beep(uint32_t freq_hz, uint32_t duration_ms) {
+    ledc_set_freq(LEDC_LOW_SPEED_MODE, LEDC_TIMER_2, freq_hz);
+    ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_3, 512);
+    ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_3);
+    vTaskDelay(duration_ms / portTICK_PERIOD_MS);
+    ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_3, 0);
+    ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_3);
+}
+
+static void beep_power_on(void) {
+    beep(2200, 150);
+}
+
+static void beep_power_off(void) {
+    /* Triple beep estilo PS3 */
+    for (uint8_t i = 0; i < 3; i++) {
+        beep(2600, 70);
+        vTaskDelay(70 / portTICK_PERIOD_MS);
+    }
+}
+
 static void sys_mgr_power_on(void) {
+    beep_power_on();
     set_power_on(1);
     if (!hw_config.power_pin_is_hold) {
         vTaskDelay(hw_config.power_pin_pulse_ms / portTICK_PERIOD_MS);
@@ -494,6 +520,7 @@ static void sys_mgr_power_on(void) {
 }
 
 static void sys_mgr_power_off(void) {
+    beep_power_off();
     bt_host_disconnect_all();
 #ifdef CONFIG_BLUERETRO_HW2
     if (hw_config.power_pin_is_hold) {
@@ -611,6 +638,26 @@ void sys_mgr_init(uint32_t package) {
     };
     ledc_timer_config(&ledc_timer);
     ledc_channel_config(&ledc_channel);
+
+    /* Timer y canal propios para el piezo (beeps de encendido/apagado),
+       separados de los que usan los LEDs de los puertos. */
+    ledc_timer_config_t piezo_timer = {
+        .duty_resolution = LEDC_TIMER_10_BIT,
+        .freq_hz = 2200,
+        .speed_mode = LEDC_LOW_SPEED_MODE,
+        .timer_num = LEDC_TIMER_2,
+        .clk_cfg = LEDC_AUTO_CLK,
+    };
+    ledc_channel_config_t piezo_channel = {
+        .channel    = LEDC_CHANNEL_3,
+        .duty       = 0,
+        .gpio_num   = PIEZO_PIN,
+        .speed_mode = LEDC_LOW_SPEED_MODE,
+        .hpoint     = 0,
+        .timer_sel  = LEDC_TIMER_2,
+    };
+    ledc_timer_config(&piezo_timer);
+    ledc_channel_config(&piezo_channel);
 
     while (wired_adapter.system_id <= WIRED_AUTO) {
         boot_btn_hdl();
