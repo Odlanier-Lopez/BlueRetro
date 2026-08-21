@@ -218,7 +218,7 @@ static void bt_fb_task(void *param) {
                 bt_data = &bt_adapter.data[device->ids.id];
             }
 
-            switch (fb_data->header.type) {
+switch (fb_data->header.type) {
                 case FB_TYPE_MEM_WRITE:
                     mc_storage_update();
                     break;
@@ -248,6 +248,9 @@ static void bt_fb_task(void *param) {
                     if (gid_update_sys(fb_data)) {
                         config_init(GAMEID_CFG);
                     }
+                    break;
+                case FB_TYPE_SD_INFO:
+                    sd_info_update(fb_data);
                     break;
                 default:
                     break;
