@@ -41,6 +41,7 @@
 #define N64_SLOT_CHANGE 0x03
 
 #define GAME_ID_CMD 0x1D
+#define SD_INFO_CMD 0x1E
 
 #define RMT_MEM_ITEM_NUM SOC_RMT_MEM_WORDS_PER_CHANNEL
 
@@ -231,6 +232,25 @@ static void nsi_game_id_cmd_hdlr(uint8_t channel, uint8_t port, uint16_t item) {
 
     fb_data.header.wired_id = channel;
     fb_data.header.type = FB_TYPE_GAME_ID;
+    fb_data.header.data_len = 8;
+    for (uint32_t i = 0; i < 8; ++i) {
+        fb_data.data[i] = buf[i];
+    }
+    adapter_q_fb(&fb_data);
+}
+
+static void nsi_sd_info_cmd_hdlr(uint8_t channel, uint8_t port, uint16_t item) {
+    struct raw_fb fb_data = {0};
+
+    item = nsi_items_to_bytes(item, buf, 10);
+    /* Don't answer, go back read */
+    RMT.conf_ch[channel].conf1.mem_rd_rst = 1;
+    RMT.conf_ch[channel].conf1.mem_rd_rst = 0;
+    RMT.conf_ch[channel].conf1.mem_owner = RMT_LL_MEM_OWNER_HW;
+    RMT.conf_ch[channel].conf1.rx_en = 1;
+
+    fb_data.header.wired_id = channel;
+    fb_data.header.type = FB_TYPE_SD_INFO;
     fb_data.header.data_len = 8;
     for (uint32_t i = 0; i < 8; ++i) {
         fb_data.data[i] = buf[i];
@@ -436,6 +456,9 @@ static void gc_pad_cmd_hdlr(uint8_t channel, uint8_t port, uint16_t item) {
     switch (buf[0]) {
         case GAME_ID_CMD:
             nsi_game_id_cmd_hdlr(channel, port, item);
+            break;
+        case SD_INFO_CMD:
+            nsi_sd_info_cmd_hdlr(channel, port, item);
             break;
         case 0x00:
         case 0xFF:
