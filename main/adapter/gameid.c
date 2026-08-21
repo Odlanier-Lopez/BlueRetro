@@ -64,3 +64,28 @@ int32_t gid_update_sys(struct raw_fb *fb_data) {
 char *gid_get(void) {
     return gameid;
 }
+static uint32_t sd_total_gb = 0;
+static uint32_t sd_free_gb = 0;
+
+int32_t sd_info_update(struct raw_fb *fb_data) {
+    uint32_t new_total = ((uint32_t)fb_data->data[0] << 24) | ((uint32_t)fb_data->data[1] << 16) |
+                          ((uint32_t)fb_data->data[2] << 8)  | (uint32_t)fb_data->data[3];
+    uint32_t new_free  = ((uint32_t)fb_data->data[4] << 24) | ((uint32_t)fb_data->data[5] << 16) |
+                          ((uint32_t)fb_data->data[6] << 8)  | (uint32_t)fb_data->data[7];
+
+    if (new_total != sd_total_gb || new_free != sd_free_gb) {
+        sd_total_gb = new_total;
+        sd_free_gb = new_free;
+        printf("# %s: total=%luGB free=%luGB\n", __FUNCTION__, (unsigned long)sd_total_gb, (unsigned long)sd_free_gb);
+        return 1;
+    }
+    return 0;
+}
+
+uint32_t sd_info_get_total(void) {
+    return sd_total_gb;
+}
+
+uint32_t sd_info_get_free(void) {
+    return sd_free_gb;
+}
