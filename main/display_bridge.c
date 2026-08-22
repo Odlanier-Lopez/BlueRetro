@@ -30,6 +30,8 @@
 #define DISPLAY_UART_BAUD    9600
 
 static char last_sent_hash[24] = {0};
+static uint32_t last_sent_sd_total = 0xFFFFFFFF;
+static uint32_t last_sent_sd_free = 0xFFFFFFFF;
 
 static void display_bridge_task(void *arg) {
     while (1) {
@@ -43,6 +45,21 @@ static void display_bridge_task(void *arg) {
             uart_write_bytes(DISPLAY_UART_PORT, line, len);
 
             printf("[display_bridge] Hash enviado: %s\n", hex_id);
+        }
+
+        uint32_t sd_total = sd_info_get_total();
+        uint32_t sd_free = sd_info_get_free();
+        if (sd_total != last_sent_sd_total || sd_free != last_sent_sd_free) {
+            last_sent_sd_total = sd_total;
+            last_sent_sd_free = sd_free;
+
+            char line[32];
+            int len = snprintf(line, sizeof(line), "SD:%lu,%lu\n",
+                                (unsigned long)sd_total, (unsigned long)sd_free);
+            uart_write_bytes(DISPLAY_UART_PORT, line, len);
+
+            printf("[display_bridge] SD info enviado: %lu/%lu GB\n",
+                   (unsigned long)sd_total, (unsigned long)sd_free);
         }
 
         vTaskDelay(pdMS_TO_TICKS(500));
