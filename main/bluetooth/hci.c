@@ -66,7 +66,7 @@ static uint32_t bt_config_state = 0;
 static uint32_t inquiry_state = 0;
 static uint32_t inquiry_override = 0;
 static RingbufHandle_t randq_hdl, encryptq_hdl;
-static char local_name[24] = "BlueRetro";
+static char local_name[24] = "ReLiveBT";
 
 static void bt_hci_cmd(uint16_t opcode, uint32_t cp_len);
 //static void bt_hci_cmd_inquiry(void *cp);
