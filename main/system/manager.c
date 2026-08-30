@@ -710,9 +710,14 @@ void sys_mgr_init(uint32_t package) {
             /* La consola real usa un unico boton fisico momentaneo tanto
                para encender como para apagar. Reusamos el mismo pin de
                encendido (GPIO13) y el mismo pulso corto para las dos
-               acciones -- ver sys_mgr_power_off(). */
+               acciones -- ver sys_mgr_power_off().
+               Polaridad invertida respecto a GC/N64: el pin de reset del
+               PS2 esta en reposo en HIGH, y se activa poniendolo en LOW
+               un momento -- sin esto, el pin queda forzado en el estado
+               "activo" todo el tiempo desde el arranque. */
             hw_config.port_cnt = 2;
             hw_config.power_off_use_on_pin = 1;
+            hw_config.power_pin_polarity = 1;
             break;
         case PARALLEL_1P:
         case PCE:
