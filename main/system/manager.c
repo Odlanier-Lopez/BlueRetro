@@ -168,7 +168,16 @@ static inline uint32_t get_port_led_pin(uint32_t index) {
 
 static void internal_flag_init(void) {
 #ifdef CONFIG_BLUERETRO_HW2
-    if (hw_config.power_pin_polarity) {
+    if (wired_adapter.system_id == PS2) {
+        /* El PS2 comparte un unico pin (GPIO13) tanto para encender como
+           para apagar, un esquema distinto al de GC/N64 (2 pines). La
+           heuristica generica de abajo esta pensada para ese otro
+           esquema y puede confundirse aca -- como sabemos con certeza
+           que este es un adaptador con cableado real (interno), lo
+           fijamos directo sin adivinar. */
+        hw_config.external_adapter = 0;
+    }
+    else if (hw_config.power_pin_polarity) {
         if (!gpio_get_level(POWER_ON_PIN) && gpio_get_level(RESET_PIN)) {
             hw_config.external_adapter = 1;
         }
