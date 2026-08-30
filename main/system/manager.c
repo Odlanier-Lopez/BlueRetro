@@ -523,7 +523,15 @@ static void sys_mgr_power_off(void) {
     beep_power_off();
     bt_host_disconnect_all();
 #ifdef CONFIG_BLUERETRO_HW2
-    if (hw_config.power_pin_is_hold) {
+    if (hw_config.power_off_use_on_pin) {
+        /* PS2: el mismo pin/boton fisico que enciende (GPIO13) tambien
+           apaga, con un pulso corto identico al de encendido -- la
+           consola real usa un unico boton momentaneo para ambas cosas. */
+        set_power_on(1);
+        vTaskDelay(hw_config.power_pin_pulse_ms / portTICK_PERIOD_MS);
+        set_power_on(0);
+    }
+    else if (hw_config.power_pin_is_hold) {
         set_power_on(0);
     }
     else {
@@ -697,6 +705,14 @@ void sys_mgr_init(uint32_t package) {
         case DC:
         case GC:
             hw_config.port_cnt = 4;
+            break;
+        case PS2:
+            /* La consola real usa un unico boton fisico momentaneo tanto
+               para encender como para apagar. Reusamos el mismo pin de
+               encendido (GPIO13) y el mismo pulso corto para las dos
+               acciones -- ver sys_mgr_power_off(). */
+            hw_config.port_cnt = 2;
+            hw_config.power_off_use_on_pin = 1;
             break;
         case PARALLEL_1P:
         case PCE:
