@@ -57,6 +57,10 @@ struct hw_config hw_config = {
         0x00FFFF, /* Yellow */
         0xFF0080, /* Purple */
     },
+    /* Usado solo por PS2: el mismo pin/pulso de encendido tambien
+       se usa para apagar, ya que la consola real usa un unico
+       boton fisico momentaneo para ambas acciones. */
+    .power_off_use_on_pin = 0,
 };
 
 static char *hw_config_name_idx[] = {
