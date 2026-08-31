@@ -2,9 +2,12 @@
  * Copyright (c) 2019-2025, Jacques Gagnon
  * SPDX-License-Identifier: Apache-2.0
  */
+
 #ifndef _CONFIG_H_
 #define _CONFIG_H_
+
 #include "adapter.h"
+
 #define CONFIG_MAGIC_V0 0xA5A5A5A5
 #define CONFIG_MAGIC_V1 0xF380D824
 #define CONFIG_MAGIC_V2 0x1782DB8A
@@ -14,10 +17,12 @@
 #define ADAPTER_MAPPING_MAX 128
 #define CONFIG_BANKSEL_MAX 4
 #define CONFIG_BANKSEL_DBG 0xDB
+
 enum {
     DEFAULT_CFG = 0,
     GAMEID_CFG,
 };
+
 struct map_cfg {
     uint8_t src_btn;
     uint8_t dst_btn;
@@ -28,28 +33,33 @@ struct map_cfg {
     uint8_t turbo;
     uint8_t algo;
 } __packed;
+
 struct global_cfg {
     uint8_t system_cfg;
     uint8_t multitap_cfg;
     uint8_t inquiry_mode;
     uint8_t banksel;
 } __packed;
+
 struct out_cfg {
     uint8_t dev_mode;
     uint8_t acc_mode;
 } __packed;
+
 struct in_cfg {
     uint8_t bt_dev_id;
     uint8_t bt_subdev_id;
     uint8_t map_size;
     struct map_cfg map_cfg[ADAPTER_MAPPING_MAX];
 } __packed;
+
 struct config {
     uint32_t magic;
     struct global_cfg global_cfg;
     struct out_cfg out_cfg[WIRED_MAX_DEV];
     struct in_cfg in_cfg[WIRED_MAX_DEV];
 } __packed;
+
 struct hw_config {
     union {
         struct {
@@ -82,18 +92,20 @@ struct hw_config {
             uint32_t reset_pin_pulse_ms;
             uint32_t sw_io0_hold_thres_ms[3];
             uint32_t ps_ctrl_colors[8];
-            uint32_t power_off_use_on_pin;
         };
-        uint32_t data32[44];
+        uint32_t data32[43];
     };
     uint8_t bdaddr[6];
 } __packed;
+
 extern struct config config;
 extern struct hw_config hw_config;
+
 void config_set_rst_bare_core(bool value);
 void hw_config_patch(void);
 void config_init(uint32_t src);
 void config_update(uint32_t dst);
 uint32_t config_get_src(void);
 void config_debug_log(void);
+
 #endif /* _CONFIG_H_ */
